@@ -343,6 +343,9 @@
 /* When a user taps and holds on an item from the Recently Visited section, this label will appear indicating the option to remove that item. */
 "FirefoxHome.RecentHistory.Remove" = "Kaldır";
 
+/* Label showing how many pages there is in a search group. %d represents a number */
+"FirefoxHomepage.Common.PagesCount.v112" = "Sayfa: %d";
+
 /* The title for the Settings context menu action for sponsored tiles in the Firefox home page shortcuts section. Clicking this brings the users to the Shortcuts Settings. */
 "FirefoxHomepage.ContextualMenu.Settings.v101" = "Ayarlar";
 
@@ -905,7 +908,7 @@
 "Onboarding.IntroDescriptionPart2.v102" = "Kendimizi herkes için daha iyi bir internet inşa etmeye adadık.";
 
 /* Describes an action on some of the Onboarding screen, including the wallpaper onboarding screen. This string will be on a button so user can skip that onboarding page. */
-"Onboarding.LaterAction.v102" = "Daha sonra";
+"Onboarding.LaterAction.v102" = "Şimdi değil";
 
 /* String used to describes the description of what Firefox is on the Sync onboarding page for 106 version in our Onboarding screens. */
 "Onboarding.Sync.Description.v106" = "Diğer cihazlarınızdaki sekmeleri ve parolaları alın, kaldığınız yerden devam edin.";
@@ -1216,9 +1219,6 @@
 /* The placeholder for URL Field when saving a custom search engine */
 "Settings.AddCustomEngine.URLPlaceholder" = "Adres (Sorgunun yerine %s gelecek)";
 
-/* Label used as an item in Settings screen. When touched, it will take user to credit card settings page to that will allows to add or modify saved credit cards to allow for autofill in a webpage. */
-"Settings.AutofillCreditCard.Title.v110" = "Kredi kartını otomatik doldur";
-
 /* Button in Data Management that clears all items. */
 "Settings.ClearAllWebsiteData.Clear.Button" = "Tüm web sitesi verilerini temizle";
 
@@ -1450,6 +1450,9 @@
 /* Option in settings to show a blank page when you open a new tab */
 "Settings.NewTab.Option.BlankPage" = "Boş sayfa";
 
+/* Option in settings to show your homepage when you open a new tab */
+"Settings.NewTab.Option.Custom" = "Özel";
+
 /* Option in settings to show Firefox Home when you open a new tab */
 "Settings.NewTab.Option.FirefoxHome" = "Firefox Başlangıç";
 
@@ -1577,7 +1580,7 @@
 "Settings.TrackingProtection.Alert.Button" = "Tamam";
 
 /* Decription for the tracker protection alert. */
-"Settings.TrackingProtection.Alert.Description" = "Bir sitenin düzgün çalışmadığını fark ederseniz adres çubuğundaki kalkan simgesine dokunarak o site için gelişmiş izlenme korumasını kapatabilirsiniz.";
+"Settings.TrackingProtection.Alert.Description" = "Bir sitenin düzgün çalışmadığını fark ederseniz adres çubuğundaki kilit simgesine dokunarak o site için gelişmiş izlenme korumasını kapatabilirsiniz.";
 
 /* Title for the tracker protection alert. */
 "Settings.TrackingProtection.Alert.Title" = "Bilgi";
@@ -1592,7 +1595,7 @@
 "Settings.TrackingProtection.ProtectionCellFooter" = "Hedefli reklamları azaltır ve reklamcıların gezdiğiniz siteleri izlemesini engeller.";
 
 /* Footer information for tracker protection level. */
-"Settings.TrackingProtection.ProtectionLevel.Footer" = "Bir sitenin düzgün çalışmadığını fark ederseniz adres çubuğundaki kalkan simgesine dokunarak o site için gelişmiş izlenme korumasını kapatabilirsiniz.";
+"Settings.TrackingProtection.ProtectionLevel.Footer" = "Bir sitenin düzgün çalışmadığını fark ederseniz adres çubuğundaki kilit simgesine dokunarak o site için gelişmiş izlenme korumasını kapatabilirsiniz.";
 
 /* Description for standard level tracker protection */
 "Settings.TrackingProtection.ProtectionLevelStandard.Description" = "Web sitelerinin düzgün çalışması için bazı takipçilere izin verir.";
@@ -1608,6 +1611,9 @@
 
 /* Tracking protection settings option for using the basic blocklist. */
 "Settings.TrackingProtectionOption.BasicBlockList" = "Standart (varsayılan)";
+
+/* Tracking protection settings status showing the current option selected. */
+"Settings.TrackingProtectionOption.BasicBlockList.Status" = "Standart";
 
 /* Tracking protection settings option for using the strict blocklist. */
 "Settings.TrackingProtectionOption.BlockListStrict" = "Sıkı";
@@ -1760,7 +1766,7 @@
 "TimeConstants.Yesterday.v106" = "dün";
 
 /* label for Not Now button */
-"Toasts.NotNow" = "Daha sonra";
+"Toasts.NotNow" = "Şimdi değil";
 
 /* Open App Store button */
 "Toasts.OpenAppStore" = "App Store’u aç";
