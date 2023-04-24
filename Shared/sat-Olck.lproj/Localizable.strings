@@ -343,6 +343,9 @@
 /* When a user taps and holds on an item from the Recently Visited section, this label will appear indicating the option to remove that item. */
 "FirefoxHome.RecentHistory.Remove" = "ᱚᱪᱚᱜᱽ ᱢᱮ";
 
+/* Label showing how many pages there is in a search group. %d represents a number */
+"FirefoxHomepage.Common.PagesCount.v112" = "ᱥᱟᱦᱴᱟ ᱠᱚ :%d";
+
 /* The title for the Settings context menu action for sponsored tiles in the Firefox home page shortcuts section. Clicking this brings the users to the Shortcuts Settings. */
 "FirefoxHomepage.ContextualMenu.Settings.v101" = "ᱥᱟᱡᱟᱣ ᱠᱚ";
 
@@ -1447,6 +1450,9 @@
 /* Option in settings to show a blank page when you open a new tab */
 "Settings.NewTab.Option.BlankPage" = "ᱮᱠᱷᱮᱱᱟ ᱥᱟᱦᱴᱟ";
 
+/* Option in settings to show your homepage when you open a new tab */
+"Settings.NewTab.Option.Custom" = "ᱠᱩᱥᱤᱭᱟᱜ";
+
 /* Option in settings to show Firefox Home when you open a new tab */
 "Settings.NewTab.Option.FirefoxHome" = "Firefox ᱚᱲᱟᱜ";
 
@@ -1605,6 +1611,9 @@
 
 /* Tracking protection settings option for using the basic blocklist. */
 "Settings.TrackingProtectionOption.BasicBlockList" = "ᱱᱟᱯ ( ᱢᱩᱞ ᱯᱷᱮᱲᱟᱛ)";
+
+/* Tracking protection settings status showing the current option selected. */
+"Settings.TrackingProtectionOption.BasicBlockList.Status" = "ᱢᱟᱱᱚᱠ";
 
 /* Tracking protection settings option for using the strict blocklist. */
 "Settings.TrackingProtectionOption.BlockListStrict" = "ᱱᱤᱦᱟᱛ";
