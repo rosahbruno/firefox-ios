@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { FormAutofill } from "resource://autofill/FormAutofill.sys.mjs";
-import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 import { HeuristicsRegExp } from "resource://gre/modules/shared/HeuristicsRegExp.sys.mjs";
 
 const lazy = {};
@@ -15,7 +14,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   LabelUtils: "resource://gre/modules/shared/LabelUtils.sys.mjs",
 });
 
-XPCOMUtils.defineLazyGetter(lazy, "log", () =>
+ChromeUtils.defineLazyGetter(lazy, "log", () =>
   FormAutofill.defineLogGetter(lazy, "FormAutofillHeuristics")
 );
 
@@ -88,6 +87,7 @@ export class FormSection {
  */
 export const FormAutofillHeuristics = {
   RULES: HeuristicsRegExp.getRules(),
+  LABEL_RULES: HeuristicsRegExp.getLabelRules(),
 
   CREDIT_CARD_FIELDNAMES: [],
   ADDRESS_FIELDNAMES: [],
@@ -260,7 +260,7 @@ export const FormAutofillHeuristics = {
       ) {
         const regExpTelExtension = new RegExp(
           "\\bext|ext\\b|extension|ramal", // pt-BR, pt-PT
-          "iu"
+          "iug"
         );
         if (this._matchRegexp(field.element, regExpTelExtension)) {
           scanner.updateFieldName(scanner.parsingIndex, "tel-extension");
@@ -392,9 +392,6 @@ export const FormAutofillHeuristics = {
     return true;
   },
 
-  // The old heuristics can be removed when we fully adopt fathom, so disable the
-  // esline complexity check for now
-  /* eslint-disable complexity */
   /**
    * Try to look for expiration date fields and revise the field names if needed.
    *
@@ -412,7 +409,7 @@ export const FormAutofillHeuristics = {
     }
 
     const fields = [];
-    for (let idx = scanner.parsingIndex; !scanner.parsingFinished; idx++) {
+    for (let idx = scanner.parsingIndex; ; idx++) {
       const detail = scanner.getFieldDetailByIndex(idx);
       if (!INTERESTED_FIELDS.includes(detail?.fieldName)) {
         break;
@@ -432,11 +429,25 @@ export const FormAutofillHeuristics = {
       return true;
     }
 
-    // If the previous element is a cc field, these fields is very likely cc expiry fields
+    const prevCCFields = new Set();
+    for (let idx = scanner.parsingIndex - 1; ; idx--) {
+      const detail = scanner.getFieldDetailByIndex(idx);
+      if (
+        lazy.FormAutofillUtils.getCategoryFromFieldName(detail?.fieldName) !=
+        "creditCard"
+      ) {
+        break;
+      }
+      prevCCFields.add(detail.fieldName);
+    }
+    // We update the "cc-exp-*" fields to correct "cc-ex-*" fields order when
+    // the following conditions are met:
+    // 1. The previous elements are identified as credit card fields and
+    //    cc-number is in it
+    // 2. There is no "cc-exp-*" fields in the previous credit card elements
     if (
-      ["cc-number", "cc-name", "cc-type"].includes(
-        scanner.getFieldDetailByIndex(scanner.parsingIndex - 1)?.fieldName
-      )
+      ["cc-number", "cc-name"].some(f => prevCCFields.has(f)) &&
+      !["cc-exp", "cc-exp-month", "cc-exp-year"].some(f => prevCCFields.has(f))
     ) {
       if (fields.length == 1) {
         scanner.updateFieldName(scanner.parsingIndex, "cc-exp");
@@ -452,6 +463,79 @@ export const FormAutofillHeuristics = {
     for (let idx = 0; idx < fields.length; idx++) {
       scanner.updateFieldName(scanner.parsingIndex + idx, null);
     }
+    return false;
+  },
+
+  /**
+   * Look for cc-*-name fields when *-name field is present
+   *
+   * @param {FieldScanner} scanner
+   *        The current parsing status for all elements
+   * @returns {boolean}
+   *          Return true if there is any field can be recognized in the parser,
+   *          otherwise false.
+   */
+  _parseCreditCardNameFields(scanner, fieldDetail) {
+    const INTERESTED_FIELDS = [
+      "name",
+      "given-name",
+      "additional-name",
+      "family-name",
+    ];
+
+    if (!INTERESTED_FIELDS.includes(fieldDetail.fieldName)) {
+      return false;
+    }
+
+    const fields = [];
+    for (let idx = scanner.parsingIndex; ; idx++) {
+      const detail = scanner.getFieldDetailByIndex(idx);
+      if (!INTERESTED_FIELDS.includes(detail?.fieldName)) {
+        break;
+      }
+      fields.push(detail);
+    }
+
+    const prevCCFields = new Set();
+    for (let idx = scanner.parsingIndex - 1; ; idx--) {
+      const detail = scanner.getFieldDetailByIndex(idx);
+      if (
+        lazy.FormAutofillUtils.getCategoryFromFieldName(detail?.fieldName) !=
+        "creditCard"
+      ) {
+        break;
+      }
+      prevCCFields.add(detail.fieldName);
+    }
+
+    // We update the "name" fields to "cc-name" fields when the following
+    // conditions are met:
+    // 1. The previous elements are identified as credit card fields and
+    //    cc-number is in it
+    // 2. There is no "cc-name-*" fields in the previous credit card elements
+    if (
+      ["cc-number"].some(f => prevCCFields.has(f)) &&
+      !["cc-name", "cc-given-name", "cc-family-name"].some(f =>
+        prevCCFields.has(f)
+      )
+    ) {
+      // If there is only one field, assume the name field a `cc-name` field
+      if (fields.length == 1) {
+        scanner.updateFieldName(scanner.parsingIndex, `cc-name`);
+        scanner.parsingIndex += 1;
+      } else {
+        // update *-name to cc-*-name
+        for (const field of fields) {
+          scanner.updateFieldName(
+            scanner.parsingIndex,
+            `cc-${field.fieldName}`
+          );
+          scanner.parsingIndex += 1;
+        }
+      }
+      return true;
+    }
+
     return false;
   },
 
@@ -500,7 +584,8 @@ export const FormAutofillHeuristics = {
         this._parsePhoneFields(scanner, fieldDetail) ||
         this._parseStreetAddressFields(scanner, fieldDetail) ||
         this._parseAddressFields(scanner, fieldDetail) ||
-        this._parseCreditCardExpiryFields(scanner, fieldDetail)
+        this._parseCreditCardExpiryFields(scanner, fieldDetail) ||
+        this._parseCreditCardNameFields(scanner, fieldDetail)
       ) {
         continue;
       }
@@ -623,16 +708,10 @@ export const FormAutofillHeuristics = {
     let fieldNames = [];
     const isAutoCompleteOff =
       element.autocomplete == "off" || element.form?.autocomplete == "off";
-    if (
-      FormAutofill.isAutofillCreditCardsAvailable &&
-      (!isAutoCompleteOff || FormAutofill.creditCardsAutocompleteOff)
-    ) {
+    if (!isAutoCompleteOff || FormAutofill.creditCardsAutocompleteOff) {
       fieldNames.push(...this.CREDIT_CARD_FIELDNAMES);
     }
-    if (
-      FormAutofill.isAutofillAddressesAvailable &&
-      (!isAutoCompleteOff || FormAutofill.addressesAutocompleteOff)
-    ) {
+    if (!isAutoCompleteOff || FormAutofill.addressesAutocompleteOff) {
       fieldNames.push(...this.ADDRESS_FIELDNAMES);
     }
 
@@ -747,15 +826,9 @@ export const FormAutofillHeuristics = {
       }
     }
 
-    if (fields.length) {
-      // Find a matched field name using regex-based heuristics
-      const matchedFieldName = this._findMatchedFieldName(element, fields);
-      if (matchedFieldName) {
-        return [matchedFieldName, null, null];
-      }
-    }
-
-    return [null, null, null];
+    // Find a matched field name using regexp-based heuristics
+    const matchedFieldName = this._findMatchedFieldName(element, fields);
+    return [matchedFieldName, null, null];
   },
 
   /**
@@ -884,18 +957,29 @@ export const FormAutofillHeuristics = {
    * Extract all the signature strings of an element.
    *
    * @param {HTMLElement} element
-   * @returns {ElementStrings}
+   * @returns {Array<string>}
    */
   _getElementStrings(element) {
+    return [element.id, element.name, element.placeholder?.trim()];
+  },
+
+  /**
+   * Extract all the label strings associated with an element.
+   *
+   * @param {HTMLElement} element
+   * @returns {ElementStrings}
+   */
+  _getElementLabelStrings(element) {
     return {
       *[Symbol.iterator]() {
-        yield element.id;
-        yield element.name;
-        yield element.placeholder?.trim();
-
         const labels = lazy.LabelUtils.findLabelElements(element);
         for (let label of labels) {
           yield* lazy.LabelUtils.extractLabelStrings(label);
+        }
+
+        const ariaLabels = element.getAttribute("aria-label");
+        if (ariaLabels) {
+          yield* [ariaLabels];
         }
       },
     };
@@ -924,42 +1008,75 @@ export const FormAutofillHeuristics = {
   },
 
   /**
-   * Find the first matched field name of the element wih given regex list.
+   * Find the first matching field name from a given list of field names
+   * that matches an HTML element.
    *
-   * @param {HTMLElement} element
-   * @param {Array<string>} regexps
-   *        The regex key names that correspond to pattern in the rule list. It will
-   *        be matched against the element string converted to lower case.
-   * @returns {?string} The first matched field name
+   * The function first tries to match the element against a set of
+   * pre-defined regular expression rules. If no match is found, it
+   * then checks for label-specific rules, if they exist.
+   *
+   * Note: For label rules, the keyword is often more general
+   * (e.g., "^\\W*address"), hence they are only searched within labels
+   * to reduce the occurrence of false positives.
+   *
+   * @param {HTMLElement} element The element to match.
+   * @param {Array<string>} fieldNames An array of field names to compare against.
+   * @returns {string|null} The name of the matched field, or null if no match was found.
    */
-  _findMatchedFieldName(element, regexps) {
-    const getElementStrings = this._getElementStrings(element);
-    for (let regexp of regexps) {
-      for (let string of getElementStrings) {
-        if (this.testRegex(this.RULES[regexp], string?.toLowerCase())) {
-          return regexp;
-        }
-      }
+  _findMatchedFieldName(element, fieldNames) {
+    if (!fieldNames.length) {
+      return null;
     }
 
-    return null;
+    // Attempt to match the element against the default set of rules
+    let matchedFieldName = fieldNames.find(fieldName =>
+      this._matchRegexp(element, this.RULES[fieldName])
+    );
+
+    // If no match is found, and if a label rule exists for the field,
+    // attempt to match against the label rules
+    if (!matchedFieldName) {
+      matchedFieldName = fieldNames.find(fieldName => {
+        const regexp = this.LABEL_RULES[fieldName];
+        return this._matchRegexp(element, regexp, { attribute: false });
+      });
+    }
+    return matchedFieldName;
   },
 
   /**
    * Determine whether the regexp can match any of element strings.
    *
-   * @param {HTMLElement} element
-   * @param {RegExp} regexp
-   *
-   * @returns {boolean}
+   * @param {HTMLElement} element The HTML element to match.
+   * @param {RegExp} regexp       The regular expression to match against.
+   * @param {object} [options]    Optional parameters for matching.
+   * @param {boolean} [options.attribute=true]
+   *                              Whether to match against the element's attributes.
+   * @param {boolean} [options.label=true]
+   *                              Whether to match against the element's labels.
+   * @returns {boolean} True if a match is found, otherwise false.
    */
-  _matchRegexp(element, regexp) {
-    const elemStrings = this._getElementStrings(element);
-    for (const str of elemStrings) {
-      if (regexp.test(str)) {
+  _matchRegexp(element, regexp, { attribute = true, label = true } = {}) {
+    if (!regexp) {
+      return false;
+    }
+
+    if (attribute) {
+      const elemStrings = this._getElementStrings(element);
+      if (elemStrings.find(s => this.testRegex(regexp, s?.toLowerCase()))) {
         return true;
       }
     }
+
+    if (label) {
+      const elementLabelStrings = this._getElementLabelStrings(element);
+      for (const s of elementLabelStrings) {
+        if (this.testRegex(regexp, s?.toLowerCase())) {
+          return true;
+        }
+      }
+    }
+
     return false;
   },
 
@@ -1082,7 +1199,7 @@ export const FormAutofillHeuristics = {
   ],
 };
 
-XPCOMUtils.defineLazyGetter(
+ChromeUtils.defineLazyGetter(
   FormAutofillHeuristics,
   "CREDIT_CARD_FIELDNAMES",
   () =>
@@ -1091,7 +1208,7 @@ XPCOMUtils.defineLazyGetter(
     )
 );
 
-XPCOMUtils.defineLazyGetter(FormAutofillHeuristics, "ADDRESS_FIELDNAMES", () =>
+ChromeUtils.defineLazyGetter(FormAutofillHeuristics, "ADDRESS_FIELDNAMES", () =>
   Object.keys(FormAutofillHeuristics.RULES).filter(name =>
     lazy.FormAutofillUtils.isAddressField(name)
   )
