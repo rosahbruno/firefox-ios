@@ -697,6 +697,9 @@
 /* Label shown when there are no logins to list */
 "LoginsList.NoLoginsFound.Description" = "การเข้าสู่ระบบที่บันทึกไว้จะแสดงที่นี่ หากคุณบันทึกการเข้าสู่ระบบลงใน Firefox บนอุปกรณ์อื่น ให้ลงชื่อเข้าใช้บัญชี Firefox ของคุณ";
 
+/* Label shown when there are no logins to list. The placeholder will be replaced with the app name. */
+"LoginsList.NoLoginsFound.Description.v119" = "การเข้าสู่ระบบที่บันทึกไว้จะแสดงที่นี่ หากคุณบันทึกการเข้าสู่ระบบลงใน %@ บนอุปกรณ์อื่น ให้ลงชื่อเข้าใช้บัญชีของคุณ";
+
 /* Label shown when there are no logins saved */
 "LoginsList.NoLoginsFound.Title" = "ไม่พบการเข้าสู่ระบบ";
 
@@ -1010,7 +1013,7 @@
 "ScanQRCode.Error.OK.Button" = "ตกลง";
 
 /* Text for the instructions label, displayed in the QR scanner view */
-"ScanQRCode.Instructions.Label" = "จัดตำแหน่งรหัส QR ให้อยู่ภายในกรอบเพื่อสแกน";
+"ScanQRCode.Instructions.Label" = "จัดตำแหน่งคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อสแกน";
 
 /* Text of the prompt that is shown to the user when the data is invalid */
 "ScanQRCode.InvalidDataError.Message" = "ข้อมูลไม่ถูกต้อง";
@@ -1019,7 +1022,7 @@
 "ScanQRCode.PermissionError.Message.v100" = "ไปที่ ‘การตั้งค่า’ ของอุปกรณ์ > ‘Firefox’ และอนุญาตให้ Firefox เข้าถึงกล้อง";
 
 /* Title for the QR code scanner view. */
-"ScanQRCode.View.Title" = "สแกนรหัส QR";
+"ScanQRCode.View.Title" = "สแกนคิวอาร์โค้ด";
 
 /* Open search section of settings */
 "Search" = "ค้นหา";
